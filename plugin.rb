@@ -21,6 +21,9 @@ after_initialize do
   register_post_custom_field_type("hn_rank", :integer)
   register_user_custom_field_type("hn_username", :string)
 
+  ::NestedReplies::Sort.singleton_class.prepend(::HackerNewsClient::Sort::Extension)
+  ::NestedTopicsController.prepend(::HackerNewsClient::NestedTopicsControllerExtension)
+
   ::HackerNewsClient::CategorySeeder.ensure_category! if SiteSetting.hacker_news_client_enabled
 
   on(:site_setting_changed) do |name, _old, new_value|

@@ -27,12 +27,18 @@ parent's Firebase `kids` array so sibling order matches HN's ranking.
 `SyncItem` resolves a single item to either a new comment (creates one) or an edit
 (revises the post). Dead/deleted items soft-destroy their corresponding posts.
 
+## Comment ordering
+
+The plugin registers an `hn_rank` algorithm on `NestedReplies::Sort` (using the
+`hn_rank` post custom field set at import time) and makes it the default sort
+for topics imported from HN. `?sort=hn_rank` mirrors HN's ranked comment order
+regardless of how many likes accumulate on the Discourse side; other sorts
+(`top`/`new`/`old`) remain available.
+
 ## Settings
 
 - `hacker_news_client_enabled` — master switch.
 - `hacker_news_client_top_stories_count` — how many front-page ids to mirror (default 30).
-- `hacker_news_client_voter_pool_size` — size of the staged voter pool used to mint
-  synthetic likes that preserve HN ranking when comments arrive out of order.
 
 ## Requirements
 

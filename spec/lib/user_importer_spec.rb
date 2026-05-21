@@ -35,17 +35,4 @@ RSpec.describe ::HackerNewsClient::UserImporter do
       expect(hn_user.custom_fields["hn_username"]).to eq("dang")
     end
   end
-
-  describe ".voter_pool" do
-    before { SiteSetting.hacker_news_client_voter_pool_size = 3 }
-
-    it "creates and reuses staged voter accounts" do
-      expect { described_class.voter_pool }.to change { User.count }.by(3)
-      expect { described_class.voter_pool }.not_to change { User.count }
-
-      pool = described_class.voter_pool
-      expect(pool.length).to eq(3)
-      expect(pool.first.custom_fields["hn_username"]).to eq("hn_voter_001")
-    end
-  end
 end

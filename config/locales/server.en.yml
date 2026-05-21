@@ -2,7 +2,6 @@ en:
   site_settings:
     hacker_news_client_enabled: "Mirror the Hacker News front page into a 'Hacker News' category with nested comments. Stories and comments stay in sync with HN."
     hacker_news_client_top_stories_count: "Number of front-page stories to mirror."
-    hacker_news_client_voter_pool_size: "How many staged voter accounts to maintain. Used to mint synthetic likes that preserve HN's ranked comment order."
   hacker_news_client:
     category:
       name: "Hacker News"

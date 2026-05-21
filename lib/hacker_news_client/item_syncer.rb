@@ -146,7 +146,6 @@ module ::HackerNewsClient
         return
       end
 
-      RankLiker.new(post.topic).apply_to_sibling_group_of!(post)
       Rails.logger.info(
         "HackerNewsClient: created post_id=#{post.id} for HN #{@item["id"]} parent_hn_id=#{parent_id} rank=#{rank}",
       )

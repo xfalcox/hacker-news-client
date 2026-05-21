@@ -4,7 +4,6 @@ RSpec.describe ::HackerNewsClient::StoryImporter do
   before do
     SiteSetting.hacker_news_client_enabled = true
     SiteSetting.nested_replies_enabled = true
-    SiteSetting.hacker_news_client_voter_pool_size = 5
     ::HackerNewsClient::CategorySeeder.ensure_category!
   end
 
