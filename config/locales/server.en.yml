@@ -1,0 +1,13 @@
+en:
+  site_settings:
+    hacker_news_client_enabled: "Mirror the Hacker News front page into a 'Hacker News' category with nested comments. Stories and comments stay in sync with HN."
+    hacker_news_client_top_stories_count: "Number of front-page stories to mirror."
+    hacker_news_client_voter_pool_size: "How many staged voter accounts to maintain. Used to mint synthetic likes that preserve HN's ranked comment order."
+  hacker_news_client:
+    category:
+      name: "Hacker News"
+      slug: "hacker-news"
+      description: "Live mirror of news.ycombinator.com front page. Stories and comments are imported automatically and stay in sync."
+    footer: "[Discuss on Hacker News](https://news.ycombinator.com/item?id=%{hn_id})"
+    link_only_body: "Read the linked article."
+    edit_reason: "Synced from Hacker News"

@@ -1,0 +1,14 @@
+plugins:
+  hacker_news_client_enabled:
+    default: false
+    client: false
+  hacker_news_client_top_stories_count:
+    default: 30
+    min: 1
+    max: 100
+    client: false
+  hacker_news_client_voter_pool_size:
+    default: 60
+    min: 0
+    max: 200
+    client: false
