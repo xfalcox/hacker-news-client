@@ -7,33 +7,16 @@ module ::HackerNewsClient
     end
 
     def apply_to_all_sibling_groups!
-      without_rate_limits do
-        sibling_groups.each do |parent_post_number, posts|
-          apply_to_group!(parent_post_number, posts)
-        end
-      end
+      sibling_groups.each { |parent_post_number, posts| apply_to_group!(parent_post_number, posts) }
     end
 
     def apply_to_sibling_group_of!(post)
       parent_pn = post.reply_to_post_number
       group = ordered_siblings(parent_pn)
-      without_rate_limits { apply_to_group!(parent_pn, group) }
+      apply_to_group!(parent_pn, group)
     end
 
     private
-
-    # Synthetic voters share `max_likes_per_day` like real users, so a busy
-    # backfill quickly exhausts the per-user daily quota. These actions are
-    # plugin-driven and shouldn't count against user rate limits.
-    def without_rate_limits
-      was_disabled = RateLimiter.disabled?
-      RateLimiter.disable unless was_disabled
-      begin
-        yield
-      ensure
-        RateLimiter.enable unless was_disabled
-      end
-    end
 
     def sibling_groups
       @topic
@@ -82,12 +65,26 @@ module ::HackerNewsClient
 
         next if should_like == currently_likes
 
-        if should_like
-          PostActionCreator.like(voter, post, true)
-        else
-          PostActionDestroyer.destroy(voter, post, :like)
-        end
+        cast_like_or_unlike(voter, post, should_like)
       end
+    end
+
+    # Synthetic voters share `max_likes_per_day` and the per-post-per-minute
+    # action limit with real users. A toggling `RateLimiter.disable` wrapper is
+    # racy under Sidekiq's default thread concurrency (one job re-enables while
+    # a sibling job is mid-block). Swallowing per-voter is race-free and the
+    # rank-likes are heuristic, so a missed vote here and there is acceptable.
+    def cast_like_or_unlike(voter, post, should_like)
+      if should_like
+        PostActionCreator.like(voter, post, true)
+      else
+        PostActionDestroyer.destroy(voter, post, :like)
+      end
+    rescue RateLimiter::LimitExceeded
+      Rails.logger.debug(
+        "HackerNewsClient: voter user_id=#{voter.id} hit rate limit on post_id=#{post.id}; skipping",
+      )
+      nil
     end
   end
 end
