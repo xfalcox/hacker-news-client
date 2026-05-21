@@ -27,6 +27,19 @@ parent's Firebase `kids` array so sibling order matches HN's ranking.
 `SyncItem` resolves a single item to either a new comment (creates one) or an edit
 (revises the post). Dead/deleted items soft-destroy their corresponding posts.
 
+## Topic ordering on /hot
+
+Every minute, `RefreshTopStories` writes `topic_hot_scores.score` from the
+HN-ranked position (rank 0 ≈ `BASE_SCORE`, rank N ≈ `BASE_SCORE - N`). The
+base is well above what Discourse's natural algorithm produces (~0–100), so
+HN-ranked topics always dominate `/hot` and appear in exact HN order. A
+listener on `:topic_hot_scores_updated` re-applies the scores immediately
+after Discourse's scheduled `UpdateTopicHotScores` job overwrites them every
+10 minutes. Topics that fall off the current HN top list are zeroed back out
+so they don't linger on `/hot`. This assumes the instance is an HN-mirror;
+on a multi-purpose forum the mass score-overwrite would crowd out organic
+content.
+
 ## Comment ordering
 
 The plugin registers an `hn_rank` algorithm on `NestedReplies::Sort` (using the

@@ -24,6 +24,9 @@ module ::Jobs
             "HackerNewsClient: refreshed top stories fetched=#{ids.length} enqueued=#{enqueued_count}",
           )
         end
+
+        ::HackerNewsClient::HotScorer.remember_ranked(ids)
+        ::HackerNewsClient::HotScorer.apply!(ids)
       end
     end
   end

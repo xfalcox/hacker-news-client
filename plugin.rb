@@ -39,4 +39,13 @@ after_initialize do
       ::HackerNewsClient::CategorySeeder.ensure_category!
     end
   end
+
+  # Discourse's UpdateTopicHotScores scheduled job overwrites topic_hot_scores
+  # every 10 minutes. Re-apply HN-driven scores immediately after, using the
+  # most recent ranked list cached by RefreshTopStories.
+  on(:topic_hot_scores_updated) do
+    next unless SiteSetting.hacker_news_client_enabled
+    ids = ::HackerNewsClient::HotScorer.cached_ranked_ids
+    ::HackerNewsClient::HotScorer.apply!(ids) if ids.any?
+  end
 end
