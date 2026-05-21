@@ -21,6 +21,7 @@ module ::HackerNewsClient
 
       category ||= create_category!
       ensure_category_configuration!(category)
+      ensure_default_sort!
 
       warn_if_nested_view_disabled
       warn_if_featured_link_disabled
@@ -52,6 +53,15 @@ module ::HackerNewsClient
       unless category.category_setting.nested_replies_default
         category.category_setting.update!(nested_replies_default: true)
       end
+    end
+
+    # Only flip the global default if it's still at Discourse's out-of-the-box
+    # value, so we don't override an admin who deliberately picked something
+    # else. Non-HN nested topics under `hn_rank` fall back to post_number ASC
+    # (equivalent to "old" sort), which is the natural tree order.
+    def ensure_default_sort!
+      return unless SiteSetting.nested_replies_default_sort == "top"
+      SiteSetting.nested_replies_default_sort = ::HackerNewsClient::Sort::HN_RANK
     end
 
     def warn_if_nested_view_disabled

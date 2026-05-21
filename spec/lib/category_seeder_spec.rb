@@ -46,5 +46,19 @@ RSpec.describe ::HackerNewsClient::CategorySeeder do
       expect(existing.nested_replies_default).to eq(true)
       expect(existing.topic_featured_link_allowed).to eq(true)
     end
+
+    describe "nested_replies_default_sort" do
+      it "flips the global default to hn_rank when it's still at Discourse's default" do
+        SiteSetting.nested_replies_default_sort = "top"
+        described_class.ensure_category!
+        expect(SiteSetting.nested_replies_default_sort).to eq("hn_rank")
+      end
+
+      it "leaves the global default alone when an admin has set something else" do
+        SiteSetting.nested_replies_default_sort = "new"
+        described_class.ensure_category!
+        expect(SiteSetting.nested_replies_default_sort).to eq("new")
+      end
+    end
   end
 end

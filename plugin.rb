@@ -24,6 +24,14 @@ after_initialize do
   ::NestedReplies::Sort.singleton_class.prepend(::HackerNewsClient::Sort::Extension)
   ::NestedTopicsController.prepend(::HackerNewsClient::NestedTopicsControllerExtension)
 
+  # Extend the core enum so `nested_replies_default_sort = "hn_rank"` validates.
+  # The seeder uses this to flip the global default when the plugin first activates.
+  choices = SiteSetting.type_supervisor.instance_variable_get(:@choices)
+  if choices[:nested_replies_default_sort] &&
+       choices[:nested_replies_default_sort].exclude?(::HackerNewsClient::Sort::HN_RANK)
+    choices[:nested_replies_default_sort] << ::HackerNewsClient::Sort::HN_RANK
+  end
+
   ::HackerNewsClient::CategorySeeder.ensure_category! if SiteSetting.hacker_news_client_enabled
 
   on(:site_setting_changed) do |name, _old, new_value|
