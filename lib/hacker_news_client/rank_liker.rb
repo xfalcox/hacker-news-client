@@ -7,16 +7,33 @@ module ::HackerNewsClient
     end
 
     def apply_to_all_sibling_groups!
-      sibling_groups.each { |parent_post_number, posts| apply_to_group!(parent_post_number, posts) }
+      without_rate_limits do
+        sibling_groups.each do |parent_post_number, posts|
+          apply_to_group!(parent_post_number, posts)
+        end
+      end
     end
 
     def apply_to_sibling_group_of!(post)
       parent_pn = post.reply_to_post_number
       group = ordered_siblings(parent_pn)
-      apply_to_group!(parent_pn, group)
+      without_rate_limits { apply_to_group!(parent_pn, group) }
     end
 
     private
+
+    # Synthetic voters share `max_likes_per_day` like real users, so a busy
+    # backfill quickly exhausts the per-user daily quota. These actions are
+    # plugin-driven and shouldn't count against user rate limits.
+    def without_rate_limits
+      was_disabled = RateLimiter.disabled?
+      RateLimiter.disable unless was_disabled
+      begin
+        yield
+      ensure
+        RateLimiter.enable unless was_disabled
+      end
+    end
 
     def sibling_groups
       @topic
