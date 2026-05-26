@@ -50,6 +50,26 @@ RSpec.describe ::HackerNewsClient::StoryImporter do
     expect(post.user.custom_fields["hn_username"]).to eq("dang")
   end
 
+  it "enqueues post-processing so the OP url oneboxes despite import_mode" do
+    stub_firebase_item(
+      hn_id,
+      {
+        "id" => hn_id,
+        "type" => "story",
+        "by" => "dang",
+        "title" => "Hello World",
+        "url" => "https://example.com/article",
+        "time" => 1_600_000_000,
+        "kids" => [],
+      },
+    )
+    stub_algolia_tree(hn_id, { "id" => hn_id, "children" => [] })
+
+    post = described_class.new(hn_id).import!
+
+    expect(Jobs::ProcessPost.jobs.map { |j| j["args"].first["post_id"] }).to include(post.id)
+  end
+
   it "creates an Ask HN topic with no featured_link and the text body" do
     stub_firebase_item(
       hn_id,

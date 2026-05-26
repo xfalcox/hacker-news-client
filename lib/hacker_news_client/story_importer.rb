@@ -100,6 +100,11 @@ module ::HackerNewsClient
         )
         return nil
       end
+
+      # import_mode skips PostCreator's job enqueue, so the URL in the body is
+      # never oneboxed. Trigger post-processing explicitly to cook the onebox.
+      post.trigger_post_process(new_post: true)
+
       Rails.logger.info(
         "HackerNewsClient: created topic for HN #{@hn_id} topic_id=#{post.topic_id}",
       )
