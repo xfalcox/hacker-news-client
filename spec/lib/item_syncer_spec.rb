@@ -117,6 +117,7 @@ RSpec.describe ::HackerNewsClient::ItemSyncer do
     parent_post = ::HackerNewsClient::Lookup.post_for(201)
     expect(new_post.reply_to_post_number).to eq(parent_post.post_number)
     expect(new_post.raw).to include("fresh reply")
+    expect(Jobs::ProcessPost.jobs.map { |j| j["args"].first["post_id"] }).to include(new_post.id)
   end
 
   it "rechecks for an existing post inside the creation mutex" do

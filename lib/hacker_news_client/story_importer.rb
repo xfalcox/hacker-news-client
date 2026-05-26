@@ -216,6 +216,10 @@ module ::HackerNewsClient
         )
         return nil
       end
+
+      # import_mode skips PostCreator's job enqueue, so links in the comment
+      # body are never oneboxed. Trigger post-processing explicitly.
+      post.trigger_post_process(new_post: true)
       post
     end
   end
