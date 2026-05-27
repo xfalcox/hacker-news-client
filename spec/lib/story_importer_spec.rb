@@ -90,6 +90,47 @@ RSpec.describe ::HackerNewsClient::StoryImporter do
     expect(post.raw).to include("Body here")
   end
 
+  it "enqueues an article fetch for stories with a url" do
+    stub_firebase_item(
+      hn_id,
+      {
+        "id" => hn_id,
+        "type" => "story",
+        "by" => "dang",
+        "title" => "Linked story",
+        "url" => "https://example.com/article",
+        "time" => 1_600_000_000,
+        "kids" => [],
+      },
+    )
+    stub_algolia_tree(hn_id, { "id" => hn_id, "children" => [] })
+
+    post = described_class.new(hn_id).import!
+
+    enqueued = Jobs::HackerNewsClient::FetchArticle.jobs.map { |j| j["args"].first["topic_id"] }
+    expect(enqueued).to include(post.topic_id)
+  end
+
+  it "does not enqueue an article fetch for Ask HN text posts" do
+    stub_firebase_item(
+      hn_id,
+      {
+        "id" => hn_id,
+        "type" => "story",
+        "by" => "pg",
+        "title" => "Ask HN: anything?",
+        "text" => "<p>Body here</p>",
+        "time" => 1_600_000_000,
+        "kids" => [],
+      },
+    )
+    stub_algolia_tree(hn_id, { "id" => hn_id, "children" => [] })
+
+    expect { described_class.new(hn_id).import! }.not_to change {
+      Jobs::HackerNewsClient::FetchArticle.jobs.length
+    }
+  end
+
   it "imports child comments in Firebase kids order with proper parent-of relationships" do
     stub_firebase_item(
       hn_id,

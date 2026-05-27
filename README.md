@@ -27,6 +27,15 @@ parent's Firebase `kids` array so sibling order matches HN's ranking.
 `SyncItem` resolves a single item to either a new comment (creates one) or an edit
 (revises the post). Dead/deleted items soft-destroy their corresponding posts.
 
+When a story has a link, `ImportStory` enqueues `Jobs::HackerNewsClient::FetchArticle`,
+which fetches the linked article via `TopicEmbed.find_remote` (ruby-readability
+extraction, with core's SSRF protection) and caches the extracted text in a
+`TopicEmbed` row tied to the topic. discourse-ai reads
+`topic.topic_embed.embed_content_cache` when building embeddings and summaries, so
+this feeds those features the full article rather than just the HN title and
+comments. Gated by `hacker_news_client_fetch_articles` (default on); Ask HN / text
+posts are skipped.
+
 ## Topic ordering on /hot
 
 Every minute, `RefreshTopStories` writes `topic_hot_scores.score` from the
@@ -57,6 +66,8 @@ manually.
 
 - `hacker_news_client_enabled` — master switch.
 - `hacker_news_client_top_stories_count` — how many front-page ids to mirror (default 30).
+- `hacker_news_client_fetch_articles` — fetch each linked article and cache its text on
+  the topic embed for better AI embeddings/summaries (default on).
 
 ## Requirements
 

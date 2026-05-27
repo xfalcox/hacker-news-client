@@ -2,6 +2,7 @@ en:
   site_settings:
     hacker_news_client_enabled: "Mirror the Hacker News front page into a 'Hacker News' category with nested comments. Stories and comments stay in sync with HN."
     hacker_news_client_top_stories_count: "Number of front-page stories to mirror."
+    hacker_news_client_fetch_articles: "Fetch each linked article and cache its text on the topic embed, so AI embeddings and summaries can use the full article."
   hacker_news_client:
     category:
       name: "Hacker News"

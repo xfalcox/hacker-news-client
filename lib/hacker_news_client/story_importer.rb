@@ -105,6 +105,10 @@ module ::HackerNewsClient
       # never oneboxed. Trigger post-processing explicitly to cook the onebox.
       post.trigger_post_process(new_post: true)
 
+      if story["url"].present?
+        Jobs.enqueue(::Jobs::HackerNewsClient::FetchArticle, topic_id: post.topic_id)
+      end
+
       Rails.logger.info(
         "HackerNewsClient: created topic for HN #{@hn_id} topic_id=#{post.topic_id}",
       )
