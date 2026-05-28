@@ -22,6 +22,7 @@ after_initialize do
   register_user_custom_field_type("hn_username", :string)
 
   ::NestedReplies::Sort.singleton_class.prepend(::HackerNewsClient::Sort::Extension)
+  ::NestedReplies::TreeLoader.prepend(::HackerNewsClient::Sort::TreeLoaderExtension)
   ::NestedTopicsController.prepend(::HackerNewsClient::NestedTopicsControllerExtension)
 
   # Extend the core enum so `nested_replies_default_sort = "hn_rank"` validates.

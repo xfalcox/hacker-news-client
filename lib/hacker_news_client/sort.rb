@@ -24,18 +24,28 @@ module ::HackerNewsClient
 
     module_function
 
-    # Bulk-load hn_rank for a batch of posts in one query, so the in-memory
-    # sort doesn't trigger a per-post custom_fields load (N+1).
-    def ranks_for(posts)
-      ids = posts.map(&:id)
-      return {} if ids.empty?
+    # Preload hn_rank for a batch of posts in one query so per-post
+    # custom_fields reads don't each hit the DB. No-op for posts that already
+    # have it preloaded (the tree loader extension does this for the whole
+    # level before sorting per parent group).
+    def preload_ranks(posts)
+      pending = posts.reject { |p| p.custom_field_preloaded?(HN_RANK) }
+      Post.preload_custom_fields(pending, [HN_RANK]) if pending.present?
+    end
 
-      PostCustomField
-        .where(post_id: ids, name: HN_RANK)
-        .pluck(:post_id, :value)
-        .each_with_object({}) do |(post_id, value), memo|
-          memo[post_id] = value.presence&.to_i || UNRANKED
-        end
+    def rank_for(post)
+      post.custom_fields[HN_RANK].presence&.to_i || UNRANKED
+    end
+
+    # Override NestedReplies::TreeLoader#load_posts_for_tree to preload hn_rank
+    # for the whole batch up front. Without this, the per-parent-group
+    # sort_in_memory calls would each issue their own query.
+    module TreeLoaderExtension
+      def load_posts_for_tree(scope)
+        posts = super
+        ::HackerNewsClient::Sort.preload_ranks(posts.to_a)
+        posts
+      end
     end
 
     module Extension
@@ -52,10 +62,8 @@ module ::HackerNewsClient
 
       def sort_in_memory(posts, algorithm)
         if algorithm == ::HackerNewsClient::Sort::HN_RANK
-          ranks = ::HackerNewsClient::Sort.ranks_for(posts)
-          return(
-            posts.sort_by { |p| [ranks[p.id] || ::HackerNewsClient::Sort::UNRANKED, p.post_number] }
-          )
+          ::HackerNewsClient::Sort.preload_ranks(posts)
+          return posts.sort_by { |p| [::HackerNewsClient::Sort.rank_for(p), p.post_number] }
         end
         super
       end

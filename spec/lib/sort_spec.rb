@@ -51,5 +51,35 @@ RSpec.describe ::HackerNewsClient::Sort do
       pcf_queries = queries.select { |q| q.include?("post_custom_fields") }
       expect(pcf_queries.size).to eq(1)
     end
+
+    it "issues no further queries when ranks are already preloaded" do
+      posts = topic.posts.to_a
+      ::HackerNewsClient::Sort.preload_ranks(posts)
+
+      queries = track_sql_queries { ::NestedReplies::Sort.sort_in_memory(posts, "hn_rank") }
+
+      expect(queries.select { |q| q.include?("post_custom_fields") }).to be_empty
+    end
+  end
+
+  describe "tree loader integration" do
+    it "preloads hn_rank so a full tree render avoids per-group rank queries" do
+      parent = Fabricate(:post, topic: topic, reply_to_post_number: nil)
+      5.times do |i|
+        child = Fabricate(:post, topic: topic, reply_to_post_number: parent.post_number)
+        child.custom_fields["hn_rank"] = i.to_s
+        child.save_custom_fields
+      end
+
+      loader = ::NestedReplies::TreeLoader.new(topic: topic, guardian: Guardian.new)
+
+      queries = track_sql_queries { loader.batch_preload_tree([parent], "hn_rank", max_depth: 3) }
+
+      # The hn_rank SQL ordering uses a correlated subquery (unquoted
+      # `FROM post_custom_fields`); the association preload is the only query
+      # that selects directly `FROM "post_custom_fields"`.
+      preload_queries = queries.select { |q| q.include?('FROM "post_custom_fields"') }
+      expect(preload_queries.size).to be <= 1
+    end
   end
 end
