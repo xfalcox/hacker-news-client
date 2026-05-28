@@ -42,5 +42,14 @@ RSpec.describe ::HackerNewsClient::Sort do
       ranked_only = sorted.select { |p| p.custom_fields["hn_rank"].present? }
       expect(ranked_only.map(&:id)).to eq([b.id, c.id, a.id])
     end
+
+    it "loads ranks in a single query (no N+1 over custom_fields)" do
+      posts = topic.posts.to_a # custom_fields not preloaded
+
+      queries = track_sql_queries { ::NestedReplies::Sort.sort_in_memory(posts, "hn_rank") }
+
+      pcf_queries = queries.select { |q| q.include?("post_custom_fields") }
+      expect(pcf_queries.size).to eq(1)
+    end
   end
 end

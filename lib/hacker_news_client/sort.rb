@@ -20,6 +20,24 @@ module ::HackerNewsClient
       ) ASC, post_number ASC
     SQL
 
+    UNRANKED = 2_147_483_647
+
+    module_function
+
+    # Bulk-load hn_rank for a batch of posts in one query, so the in-memory
+    # sort doesn't trigger a per-post custom_fields load (N+1).
+    def ranks_for(posts)
+      ids = posts.map(&:id)
+      return {} if ids.empty?
+
+      PostCustomField
+        .where(post_id: ids, name: HN_RANK)
+        .pluck(:post_id, :value)
+        .each_with_object({}) do |(post_id, value), memo|
+          memo[post_id] = value.presence&.to_i || UNRANKED
+        end
+    end
+
     module Extension
       def valid?(algorithm)
         algorithm == ::HackerNewsClient::Sort::HN_RANK || super
@@ -34,7 +52,10 @@ module ::HackerNewsClient
 
       def sort_in_memory(posts, algorithm)
         if algorithm == ::HackerNewsClient::Sort::HN_RANK
-          return posts.sort_by { |p| [p.custom_fields["hn_rank"].to_i, p.post_number] }
+          ranks = ::HackerNewsClient::Sort.ranks_for(posts)
+          return(
+            posts.sort_by { |p| [ranks[p.id] || ::HackerNewsClient::Sort::UNRANKED, p.post_number] }
+          )
         end
         super
       end
