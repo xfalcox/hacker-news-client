@@ -1,5 +1,20 @@
 # Hacker News Client
 
+> [!WARNING]
+> **For demo sites only — do not install on a production forum.**
+> This plugin is built to populate showcase/demo instances with live,
+> realistic data. It deliberately does things that are inappropriate for a
+> real community:
+> - Overwrites `topic_hot_scores` in bulk so `/hot` mirrors HN's homepage,
+>   crowding out any organic content.
+> - Flips the global `nested_replies_default_sort` site setting on activation.
+> - Mass-creates staged users and imports third-party content (stories,
+>   comments, and full linked-article text) without author consent.
+> - Runs frequent outbound fetches to HN's Firebase/Algolia APIs and to every
+>   linked article.
+>
+> Install it only on a throwaway/demo Discourse instance you control.
+
 Mirrors the Hacker News front page into a Discourse category to showcase
 **Nested Replies mode** with live, realistic data.
 

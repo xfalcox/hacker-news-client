@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 # name: hacker-news-client
-# about: Mirrors the Hacker News front page into a Discourse category with nested comments
+# about: DEMO SITES ONLY — mirrors the Hacker News front page into a Discourse category with nested comments. Not for production forums.
 # version: 0.1
 # authors: Discourse
-# url: https://github.com/discourse/discourse/tree/main/plugins/hacker-news-client
+# url: https://github.com/xfalcox/hacker-news-client
 
 enabled_site_setting :hacker_news_client_enabled
 
